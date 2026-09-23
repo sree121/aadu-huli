@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tigers &amp; Goats</title>
+<meta name="description" content="Play Bagh-Chal and Adu Huli, the traditional tiger and goat hunt games, against the computer or a friend.">
+<meta name="theme-color" content="#E4DCCB">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2746%27 fill=%27%23DB8A2A%27/%3E%3Cpath d=%27M38 14q4 12-2 22M50 10v18M62 14q-4 12 2 22%27 stroke=%27%2323160B%27 stroke-width=%277%27 fill=%27none%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yatra+One&family=Mukta:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#E4DCCB; --panel:#EFE8DA; --panel-2:#E8E0CF; --rule:#CFC3AB;
+  --ink:#2A2119; --muted:#6B5D4B; --faint:#978973;
+  --slab:#CBBFA5; --slab-2:#B7A88B; --groove:#54432F; --groove-hi:#E6DCC8; --node:#4A3B29;
+  --tiger:#DB8A2A; --tiger-deep:#A7560F; --stripe:#23160B; --muzzle:#F7EEDC;
+  --goat:#F7F2E6; --goat-shade:#DCD1BC; --goat-rim:#8B7960;
+  --accent:#A3322B; --accent-soft:rgba(163,50,43,.14);
+  --jade:#2C7656; --jade-soft:rgba(44,118,86,.18);
+  --gold:#B8860B;
+  --shadow:rgba(40,25,10,.35);
+  --display:"Yatra One","Georgia",serif;
+  --body:"Mukta","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#16140F; --panel:#211E18; --panel-2:#2A261F; --rule:#3A342B;
+    --ink:#EFE7D8; --muted:#AC9E88; --faint:#7F735F;
+    --slab:#2F2A22; --slab-2:#26221C; --groove:#0E0C09; --groove-hi:#4A4135; --node:#0B0907;
+    --tiger:#E6983A; --tiger-deep:#B5621A; --stripe:#1D1208; --muzzle:#F2E7D2;
+    --goat:#EFE8D8; --goat-shade:#CFC3AB; --goat-rim:#7C6C55;
+    --accent:#E0625A; --accent-soft:rgba(224,98,90,.18);
+    --jade:#5CB68F; --jade-soft:rgba(92,182,143,.2);
+    --gold:#E0B24A;
+    --shadow:rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#16140F; --panel:#211E18; --panel-2:#2A261F; --rule:#3A342B;
+  --ink:#EFE7D8; --muted:#AC9E88; --faint:#7F735F;
+  --slab:#2F2A22; --slab-2:#26221C; --groove:#0E0C09; --groove-hi:#4A4135; --node:#0B0907;
+  --tiger:#E6983A; --tiger-deep:#B5621A; --stripe:#1D1208; --muzzle:#F2E7D2;
+  --goat:#EFE8D8; --goat-shade:#CFC3AB; --goat-rim:#7C6C55;
+  --accent:#E0625A; --accent-soft:rgba(224,98,90,.18);
+  --jade:#5CB68F; --jade-soft:rgba(92,182,143,.2);
+  --gold:#E0B24A;
+  --shadow:rgba(0,0,0,.6);
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+html{color-scheme:light}
+body{margin:0}
+img{max-width:100%}
+html,body{background:var(--ground)}
+body{color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;padding:0 16px}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 56px}
+header.top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 24px;margin-bottom:16px;border-bottom:1px solid var(--rule);padding-bottom:12px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(30px,5vw,44px);line-height:1;margin:0;letter-spacing:.01em}
+h1 .amp{color:var(--tiger-deep)}
+.tagline{color:var(--muted);font-size:15px;margin:0}
+.game{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start}
+@media (max-width:880px){.game{grid-template-columns:minmax(0,1fr)}}
+
+/* board */
+.board-wrap{position:relative;background:var(--panel);border-radius:18px;padding:12px;box-shadow:inset 0 0 0 1px var(--rule)}
+.status-strip{display:flex;align-items:center;gap:10px;padding:4px 6px 12px;min-height:44px;flex-wrap:wrap}
+.turn-chip{display:inline-flex;align-items:center;gap:8px;padding:4px 12px 4px 6px;border-radius:999px;background:var(--panel-2);font-weight:600;font-size:15px}
+.turn-chip svg{width:28px;height:28px}
+.msg{color:var(--muted);font-size:15px;flex:1;min-width:180px}
+.msg b{color:var(--ink);font-weight:600}
+svg#board{display:block;width:100%;height:auto;max-height:76vh;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.piece{transition:transform .42s cubic-bezier(.3,.7,.25,1)}
+.piece .inner{transform-box:fill-box;transform-origin:center;filter:drop-shadow(0 4px 3px var(--shadow))}
+.piece.drop .inner{animation:drop .38s cubic-bezier(.2,.8,.3,1.2)}
+.piece.dying .inner{animation:die .55s ease-in forwards}
+@keyframes drop{from{transform:scale(1.5);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes die{0%{transform:scale(1);opacity:1}35%{transform:scale(1.15) rotate(-8deg);opacity:1}100%{transform:scale(.2) rotate(25deg);opacity:0}}
+.hit{fill:var(--jade);fill-opacity:0;outline:none}
+.hit.can{cursor:pointer}
+.hit.can:hover,.hit.can:focus-visible{fill-opacity:.22}
+.hit:focus-visible{stroke:var(--jade);stroke-width:3}
+.pulse{animation:pulse 1.3s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes pulse{50%{opacity:.45;transform:scale(.85)}}
+.spin{animation:spin 6s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+.thinking .turn-chip{animation:breathe 1.2s ease-in-out infinite}
+@keyframes breathe{50%{opacity:.55}}
+
+.overlay{position:absolute;inset:0;display:grid;place-items:center;border-radius:18px;background:color-mix(in srgb,var(--panel) 55%,transparent);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.overlay .card{background:var(--panel);border:1px solid var(--rule);border-radius:16px;padding:24px 28px;text-align:center;max-width:340px;box-shadow:0 20px 50px -20px var(--shadow)}
+.overlay h2{font-family:var(--display);font-weight:400;font-size:34px;margin:0 0 4px;line-height:1.1}
+.overlay p{margin:0 0 16px;color:var(--muted)}
+.overlay .big-icon{width:72px;height:72px;margin:0 auto 6px;display:block}
+
+/* side panel */
+aside{display:flex;flex-direction:column;gap:14px}
+.panel{background:var(--panel);border-radius:16px;padding:16px;box-shadow:inset 0 0 0 1px var(--rule)}
+.label{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 6px}
+.score{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.score .num{font-family:var(--display);font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.score .num small{font-family:var(--body);font-size:15px;color:var(--muted);margin-left:2px}
+.score .num.danger{color:var(--accent)}
+.tally{display:flex;gap:4px;margin-top:8px}
+.tally i{width:100%;height:6px;border-radius:3px;background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--rule)}
+.tally i.on{background:var(--accent);box-shadow:none}
+.herd{display:flex;flex-wrap:wrap;gap:2px;margin-top:8px;min-height:20px}
+.herd svg{width:18px;height:18px}
+.herd svg.gone{opacity:.25}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--rule);font-size:14px;color:var(--muted)}
+.facts span{display:flex;flex-direction:column;line-height:1.3}
+.facts b{color:var(--ink);font-size:17px;font-variant-numeric:tabular-nums}
+
+.ctrl{display:flex;flex-direction:column;gap:12px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--panel-2);border-radius:10px;padding:3px;gap:3px}
+.seg button{font:inherit;font-size:14px;font-weight:600;border:0;background:transparent;color:var(--muted);padding:7px 6px;border-radius:8px;cursor:pointer;line-height:1.2}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px var(--shadow)}
+.seg button:focus-visible,.btn:focus-visible,.tog:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:inherit;font-size:15px;font-weight:600;border:1px solid var(--rule);background:var(--panel-2);color:var(--ink);padding:8px 14px;border-radius:10px;cursor:pointer;flex:1}
+.btn.primary{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:default}
+.tog{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);cursor:pointer;background:none;border:0;font-family:inherit;padding:2px 0}
+.tog .sw{width:34px;height:20px;border-radius:10px;background:var(--rule);position:relative;transition:background .2s}
+.tog .sw::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--panel);transition:transform .2s}
+.tog[aria-pressed="true"] .sw{background:var(--jade)}
+.tog[aria-pressed="true"] .sw::after{transform:translateX(14px)}
+.hidden-ai[hidden]{display:none!important}
+
+.log{font-family:var(--mono);font-size:13px;max-height:190px;overflow-y:auto;margin:0;padding:0;list-style:none;display:grid;grid-template-columns:auto 1fr 1fr;gap:2px 10px;font-variant-numeric:tabular-nums}
+.log .n{color:var(--faint)}
+.log .x{color:var(--accent);font-weight:500}
+.log:empty::before{content:"No moves yet — goats place first.";grid-column:1/-1;color:var(--faint);font-family:var(--body)}
+
+/* rules */
+.rules{margin-top:40px;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:32px}
+@media (max-width:880px){.rules{grid-template-columns:minmax(0,1fr)}}
+.rules h2{font-family:var(--display);font-weight:400;font-size:30px;margin:0 0 8px;line-height:1.1}
+.rules h3{font-size:17px;margin:20px 0 4px;font-weight:700}
+.rules p,.rules li{max-width:65ch;color:var(--ink)}
+.rules p{margin:0 0 10px}
+.rules ul{padding-left:20px;margin:0 0 10px}
+.rules li{margin-bottom:4px}
+.rules .muted{color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td:first-child{color:var(--muted)}
+.tips li::marker{color:var(--tiger-deep)}
+@media (prefers-reduced-motion: reduce){
+  .piece{transition:none}.piece .inner,.pulse,.spin,.thinking .turn-chip{animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Tigers <span class="amp">&amp;</span> Goats</h1>
+    <p class="tagline">The hunt game carved into temple floors from Kathmandu to Mysuru</p>
+  </header>
+
+  <div class="game">
+    <section class="board-wrap" id="boardWrap" aria-label="Game board">
+      <div class="status-strip">
+        <span class="turn-chip" id="turnChip"></span>
+        <span class="msg" id="msg" aria-live="polite"></span>
+      </div>
+      <svg id="board" role="img" aria-label="Tigers and Goats board"></svg>
+      <div class="overlay" id="overlay" hidden>
+        <div class="card">
+          <svg class="big-icon" id="overIcon"></svg>
+          <h2 id="overTitle"></h2>
+          <p id="overText"></p>
+          <button class="btn primary" id="againBtn" type="button">Play again</button>
+        </div>
+      </div>
+    </section>
+
+    <aside>
+      <div class="panel">
+        <div class="score">
+          <div>
+            <p class="label">Goats eaten</p>
+            <div class="num" id="capNum">0<small>/ 5</small></div>
+            <div class="tally" id="tally"></div>
+          </div>
+          <div>
+            <p class="label">Goats in hand</p>
+            <div class="num" id="handNum">20</div>
+            <div class="herd" id="herd"></div>
+          </div>
+        </div>
+        <div class="facts">
+          <span>Tiger moves <b id="mobNum">0</b></span>
+          <span>Tigers boxed in <b id="trapNum">0</b></span>
+          <span>At risk <b id="riskNum">0</b></span>
+        </div>
+      </div>
+
+      <div class="panel ctrl">
+        <div>
+          <p class="label">Board</p>
+          <div class="seg" data-key="variant">
+            <button type="button" id="v-bagh" data-val="bagh">Bagh-Chal</button>
+            <button type="button" id="v-aadu" data-val="aadu">Adu Huli</button>
+          </div>
+        </div>
+        <div>
+          <p class="label">Opponent</p>
+          <div class="seg" data-key="mode">
+            <button type="button" id="m-ai" data-val="ai">Computer</button>
+            <button type="button" id="m-pvp" data-val="pvp">Friend</button>
+          </div>
+        </div>
+        <div class="hidden-ai" id="aiOpts">
+          <p class="label">You play</p>
+          <div class="seg" data-key="human">
+            <button type="button" id="h-g" data-val="G">Goats</button>
+            <button type="button" id="h-t" data-val="T">Tigers</button>
+          </div>
+          <p class="label" style="margin-top:12px">Difficulty</p>
+          <div class="seg" data-key="level">
+            <button type="button" id="l-e" data-val="easy">Easy</button>
+            <button type="button" id="l-m" data-val="medium">Medium</button>
+            <button type="button" id="l-h" data-val="hard">Hard</button>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn primary" id="newBtn" type="button">New game</button>
+          <button class="btn" id="undoBtn" type="button">Undo</button>
+          <button class="btn" id="hintBtn" type="button">Hint</button>
+        </div>
+        <div class="row" style="justify-content:space-between">
+          <button class="tog" id="dangerTog" type="button" aria-pressed="true"><span class="sw"></span>Show goats at risk</button>
+          <button class="tog" id="soundTog" type="button" aria-pressed="true"><span class="sw"></span>Sound</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <p class="label">Moves</p>
+        <ol class="log" id="log"></ol>
+      </div>
+    </aside>
+  </div>
+
+  <section class="rules" id="rules">
+    <div>
+      <h2>How to play</h2>
+      <p>A hunt between two unequal sides. A few strong tigers try to eat goats by jumping over them; a big herd of weak goats tries to surround the tigers until none of them can move. Herders in Nepal scratched the board into the dirt and played with pebbles, and in Tamil Nadu, Karnataka and Andhra Pradesh the board is carved into temple corridors and old verandas.</p>
+
+      <h3>Setup</h3>
+      <ul>
+        <li><b>Bagh-Chal (Nepal):</b> a 5×5 grid of 25 points joined by straight and diagonal lines. The 4 tigers start on the four corners. All 20 goats start off the board.</li>
+        <li><b>Adu Huli (South India):</b> a triangle crossed by a rectangle, 23 points in all. The 3 tigers start at the apex and on the two inner points just below it. All 15 goats start off the board.</li>
+        <li>Pieces sit on the points where lines meet and move only along the drawn lines.</li>
+      </ul>
+
+      <h3>Turns</h3>
+      <ul>
+        <li><b>Goats move first,</b> then players take turns. Every turn you must move; you can't pass.</li>
+        <li><b>Phase 1, placement:</b> on each goat turn, place one new goat on any empty point. Goats already on the board can't move until the whole herd is placed. Tigers move normally during this phase.</li>
+        <li><b>Phase 2, movement:</b> once every goat is placed, the goat player moves one goat along a line to an adjacent empty point.</li>
+        <li><b>Tigers</b> move one step along a line to an adjacent empty point, <i>or</i> capture.</li>
+      </ul>
+
+      <h3>Capturing</h3>
+      <ul>
+        <li>A tiger captures by jumping over one adjacent goat, in a straight line, onto the empty point directly beyond it. The goat is removed and never comes back.</li>
+        <li>You can capture only one goat per turn. There are no chain jumps.</li>
+        <li>Capturing is optional. Tigers can't jump over other tigers, and goats can never jump or capture.</li>
+      </ul>
+
+      <h3>Winning</h3>
+      <ul>
+        <li><b>Tigers win</b> when they have eaten 5 goats.</li>
+        <li><b>Goats win</b> when it's the tigers' turn and no tiger can move or jump.</li>
+        <li>If the goats have no legal move, the tigers win.</li>
+        <li><b>No-repeat rule:</b> after all goats are placed, a goat move can't recreate a position that has already appeared. This stops endless shuffling.</li>
+        <li><b>Draw:</b> 80 moves in a row with no capture after placement ends.</li>
+      </ul>
+    </div>
+
+    <div>
+      <h2>Two boards, one hunt</h2>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th></th><th>Bagh-Chal</th><th>Adu Huli</th></tr></thead>
+          <tbody>
+            <tr><td>Region</td><td>Nepal, North India</td><td>Karnataka, Tamil Nadu, Andhra Pradesh</td></tr>
+            <tr><td>Board</td><td>5×5 grid, 25 points</td><td>Triangle + rectangle, 23 points</td></tr>
+            <tr><td>Tigers</td><td>4, on the corners</td><td>3, at the apex</td></tr>
+            <tr><td>Goats</td><td>20</td><td>15</td></tr>
+            <tr><td>Tigers win at</td><td>5 goats eaten</td><td>5 goats eaten</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Strategy for goats</h3>
+      <ul class="tips">
+        <li>Fill the edges and corners first. A goat on the edge can't be jumped from outside the board.</li>
+        <li>Never leave a goat with an empty point directly behind it along a line a tiger can reach.</li>
+        <li>Build solid blocks. Goats that back each other up can't be jumped.</li>
+        <li>Watch for forks, where one tiger threatens two goats at once. You can only save one.</li>
+      </ul>
+      <h3>Strategy for tigers</h3>
+      <ul class="tips">
+        <li>Stay central. The middle points have 8 lines and give the most jumps.</li>
+        <li>Keep the tigers spread out so one wall of goats can't trap them all.</li>
+        <li>Strike during placement, before the herd is organised. Once the goats are all down and packed, captures get rare.</li>
+      </ul>
+      <p class="muted" style="margin-top:14px;font-size:14px">Tip: click a piece to see where it can go. A red ring marks a capture. Use Hint when you're stuck.</p>
+    </div>
+  </section>
+</div>
+
+<!-- piece artwork -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="gTiger" cx="40%" cy="35%" r="70%">
+      <stop offset="0" style="stop-color:var(--tiger)"/>
+      <stop offset="1" style="stop-color:var(--tiger-deep)"/>
+    </radialGradient>
+    <radialGradient id="gGoat" cx="40%" cy="35%" r="75%">
+      <stop offset="0" style="stop-color:var(--goat)"/>
+      <stop offset="1" style="stop-color:var(--goat-shade)"/>
+    </radialGradient>
+    <symbol id="sym-tiger" viewBox="-50 -50 100 100">
+      <circle cx="-29" cy="-30" r="14" style="fill:var(--tiger-deep)"/>
+      <circle cx="29" cy="-30" r="14" style="fill:var(--tiger-deep)"/>
+      <circle cx="-29" cy="-30" r="6.5" style="fill:var(--stripe)"/>
+      <circle cx="29" cy="-30" r="6.5" style="fill:var(--stripe)"/>
+      <circle r="40" fill="url(#gTiger)" style="stroke:var(--stripe);stroke-opacity:.55" stroke-width="2.5"/>
+      <g style="stroke:var(--stripe)" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M-11,-37 Q-6,-27 -12,-18"/><path d="M0,-39 L0,-25"/><path d="M11,-37 Q6,-27 12,-18"/>
+        <path d="M-39,-4 Q-28,-2 -24,6"/><path d="M-37,10 Q-28,10 -24,16"/>
+        <path d="M39,-4 Q28,-2 24,6"/><path d="M37,10 Q28,10 24,16"/>
+      </g>
+      <ellipse cx="0" cy="15" rx="19" ry="14" style="fill:var(--muzzle)"/>
+      <ellipse cx="-14" cy="-5" rx="4.2" ry="5.4" style="fill:var(--stripe)"/>
+      <ellipse cx="14" cy="-5" rx="4.2" ry="5.4" style="fill:var(--stripe)"/>
+      <path d="M-7,7 L7,7 L0,14 Z" style="fill:var(--stripe)"/>
+      <path d="M0,14 L0,19 M0,19 Q-6,24 -10,20 M0,19 Q6,24 10,20" style="stroke:var(--stripe)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="sym-goat" viewBox="-50 -50 100 100">
+      <g style="stroke:var(--goat-rim)" stroke-width="7.5" stroke-linecap="round" fill="none">
+        <path d="M-13,-28 C-24,-50 -44,-44 -40,-26"/>
+        <path d="M13,-28 C24,-50 44,-44 40,-26"/>
+      </g>
+      <ellipse cx="-37" cy="-4" rx="14" ry="7" transform="rotate(-18 -37 -4)" style="fill:var(--goat-shade);stroke:var(--goat-rim)" stroke-width="2.5"/>
+      <ellipse cx="37" cy="-4" rx="14" ry="7" transform="rotate(18 37 -4)" style="fill:var(--goat-shade);stroke:var(--goat-rim)" stroke-width="2.5"/>
+      <path d="M-7,30 L0,45 L7,30 Z" style="fill:var(--goat-shade);stroke:var(--goat-rim)" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle r="33" fill="url(#gGoat)" style="stroke:var(--goat-rim)" stroke-width="3"/>
+      <ellipse cx="-12" cy="-5" rx="3.8" ry="4.6" style="fill:var(--stripe)"/>
+      <ellipse cx="12" cy="-5" rx="3.8" ry="4.6" style="fill:var(--stripe)"/>
+      <ellipse cx="0" cy="15" rx="9" ry="5.5" style="fill:var(--goat-rim)"/>
+    </symbol>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7"/>
+      <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.4 1.1"/>
+    </filter>
+  </defs>
+</svg>
+
+<script type="text/plain" id="engine-src">
+var Engine = (function(){
+  var DRAW = 80;
+  var cache = {};
+  function buildBagh(){
+    var pts=[], lines=[], id=function(r,c){return r*5+c;};
+    for(var r=0;r<5;r++)for(var c=0;c<5;c++)pts.push({x:c,y:r,name:"abcde"[c]+(5-r)});
+    for(var r2=0;r2<5;r2++){var row=[],col=[];for(var k=0;k<5;k++){row.push(id(r2,k));col.push(id(k,r2));}lines.push(row,col);}
+    var d1=[],d2=[];for(var k2=0;k2<5;k2++){d1.push(id(k2,k2));d2.push(id(k2,4-k2));}lines.push(d1,d2);
+    lines.push([id(0,2),id(1,1),id(2,0)],[id(0,2),id(1,3),id(2,4)],[id(2,0),id(3,1),id(4,2)],[id(2,4),id(3,3),id(4,2)]);
+    return {key:"bagh",points:pts,lines:lines,tigerStart:[0,4,20,24],tigers:4,goats:20,target:5,pieceR:36,S:100};
+  }
+  function buildAadu(){
+    var pts=[{x:0,y:0,name:"A"}], lines=[];
+    var ys=[1.6,2.5,3.4,4.3], slopes=[-0.75,-0.25,0.25,0.75], edge=3.7, idx={};
+    for(var k=0;k<3;k++){
+      var y=ys[k], row=[];
+      idx[k+"L"]=pts.length;row.push(pts.length);pts.push({x:-edge,y:y,name:"a"+(k+1)});
+      for(var i=0;i<4;i++){idx[k+"f"+i]=pts.length;row.push(pts.length);pts.push({x:slopes[i]*y,y:y,name:"bcde"[i]+(k+1)});}
+      idx[k+"R"]=pts.length;row.push(pts.length);pts.push({x:edge,y:y,name:"f"+(k+1)});
+      lines.push(row);
+    }
+    var bottom=[];
+    for(var i2=0;i2<4;i2++){idx["3f"+i2]=pts.length;bottom.push(pts.length);pts.push({x:slopes[i2]*ys[3],y:ys[3],name:"bcde"[i2]+"4"});}
+    lines.push(bottom);
+    for(var i3=0;i3<4;i3++)lines.push([0,idx["0f"+i3],idx["1f"+i3],idx["2f"+i3],idx["3f"+i3]]);
+    lines.push([idx["0L"],idx["1L"],idx["2L"]],[idx["0R"],idx["1R"],idx["2R"]]);
+    return {key:"aadu",points:pts,lines:lines,tigerStart:[0,idx["0f1"],idx["0f2"]],tigers:3,goats:15,target:5,pieceR:30,S:100};
+  }
+  function topology(v){
+    if(cache[v])return cache[v];
+    var b=v==="aadu"?buildAadu():buildBagh(), n=b.points.length, adj=[], jumps=[];
+    for(var i=0;i<n;i++){adj.push([]);jumps.push([]);}
+    b.lines.forEach(function(L){
+      for(var k=0;k<L.length-1;k++){adj[L[k]].push(L[k+1]);adj[L[k+1]].push(L[k]);}
+      for(var k2=0;k2<L.length-2;k2++){jumps[L[k2]].push({over:L[k2+1],to:L[k2+2]});jumps[L[k2+2]].push({over:L[k2+1],to:L[k2]});}
+    });
+    b.adj=adj;b.jumps=jumps;b.n=n;cache[v]=b;return b;
+  }
+  function initial(t){var board=new Array(t.n).fill(0);t.tigerStart.forEach(function(i){board[i]=1;});return {board:board,inHand:t.goats,captured:0,turn:"G",quiet:0};}
+  function key(s){return s.board.join("")+s.turn;}
+  function moves(t,s){
+    var out=[],b=s.board,i,j,a;
+    if(s.turn==="G"){
+      if(s.inHand>0){for(i=0;i<t.n;i++)if(b[i]===0)out.push({t:"p",to:i});}
+      else{for(i=0;i<t.n;i++)if(b[i]===2){a=t.adj[i];for(j=0;j<a.length;j++)if(b[a[j]]===0)out.push({t:"m",from:i,to:a[j]});}}
+    }else{
+      for(i=0;i<t.n;i++)if(b[i]===1){a=t.jumps[i];for(j=0;j<a.length;j++)if(b[a[j].over]===2&&b[a[j].to]===0)out.push({t:"j",from:i,over:a[j].over,to:a[j].to});}
+      for(i=0;i<t.n;i++)if(b[i]===1){a=t.adj[i];for(j=0;j<a.length;j++)if(b[a[j]]===0)out.push({t:"m",from:i,to:a[j]});}
+    }
+    return out;
+  }
+  function apply(s,m){
+    var b=s.board.slice(),inHand=s.inHand,captured=s.captured,quiet=s.quiet;
+    if(m.t==="p"){b[m.to]=2;inHand--;quiet=0;}
+    else if(m.t==="m"){b[m.to]=b[m.from];b[m.from]=0;quiet=inHand===0?quiet+1:0;}
+    else{b[m.to]=1;b[m.from]=0;b[m.over]=0;captured++;quiet=0;}
+    return {board:b,inHand:inHand,captured:captured,turn:s.turn==="G"?"T":"G",quiet:quiet};
+  }
+  function legal(t,s,seen){
+    var ms=moves(t,s);
+    if(seen&&s.turn==="G"&&s.inHand===0)ms=ms.filter(function(m){return !seen.has(key(apply(s,m)));});
+    return ms;
+  }
+  function status(t,s,seen){
+    if(s.captured>=t.target)return {winner:"T",reason:"capture"};
+    if(!legal(t,s,seen).length)return s.turn==="T"?{winner:"G",reason:"trapped"}:{winner:"T",reason:"stuck"};
+    if(s.quiet>=DRAW)return {winner:"D",reason:"quiet"};
+    return null;
+  }
+  function analyse(t,s){
+    var b=s.board,mob=0,trapped=0,threat={},tc=0;
+    for(var i=0;i<t.n;i++)if(b[i]===1){
+      var m=0,a=t.adj[i],j;
+      for(j=0;j<a.length;j++)if(b[a[j]]===0)m++;
+      var jp=t.jumps[i];
+      for(j=0;j<jp.length;j++)if(b[jp[j].over]===2&&b[jp[j].to]===0){m++;if(!threat[jp[j].over]){threat[jp[j].over]=1;tc++;}}
+      if(!m)trapped++;mob+=m;
+    }
+    return {mob:mob,trapped:trapped,threat:threat,threatCount:tc};
+  }
+  function evaluate(t,s){
+    var a=analyse(t,s);
+    var sc=1200*s.captured+10*a.mob+70*a.threatCount-180*a.trapped;
+    if(s.turn==="T"&&a.threatCount)sc+=250;
+    if(s.turn==="G"&&a.threatCount>1)sc+=220;
+    return sc;
+  }
+  var LEVELS={easy:{depth:1,time:250,noise:260},medium:{depth:3,time:700,noise:25},hard:{depth:10,time:1500,noise:0}};
+  function search(t,s,level,seen){
+    var cfg=LEVELS[level]||LEVELS.medium;
+    var root=legal(t,s,seen);
+    if(!root.length)return null;
+    if(root.length===1)return root[0];
+    var WIN=1e6,deadline=Date.now()+cfg.time,aborted=false,nodes=0,best=root[0],order=root.slice();
+    function nega(st,depth,alpha,beta,ply){
+      if((++nodes&1023)===0&&Date.now()>deadline)aborted=true;
+      if(aborted)return 0;
+      if(st.captured>=t.target)return (st.turn==="T"?1:-1)*(WIN-ply);
+      var ms=moves(t,st);
+      if(!ms.length)return -(WIN-ply);
+      if(st.quiet>=DRAW)return 0;
+      if(depth===0)return (st.turn==="T"?1:-1)*evaluate(t,st);
+      var bv=-Infinity;
+      for(var i=0;i<ms.length;i++){
+        var v=-nega(apply(st,ms[i]),depth-1,-beta,-alpha,ply+1);
+        if(aborted)return 0;
+        if(v>bv)bv=v;if(v>alpha)alpha=v;if(alpha>=beta)break;
+      }
+      return bv;
+    }
+    for(var d=1;d<=cfg.depth;d++){
+      var alpha=-Infinity,bestD=null,bestV=-Infinity,scored=[];
+      for(var i=0;i<order.length;i++){
+        var v=-nega(apply(s,order[i]),d-1,-Infinity,-alpha,1);
+        if(aborted)break;
+        if(cfg.noise)v+=(Math.random()*2-1)*cfg.noise;
+        scored.push([v,order[i]]);
+        if(v>bestV){bestV=v;bestD=order[i];}
+        if(v>alpha)alpha=v;
+      }
+      if(aborted)break;
+      best=bestD;
+      var rest=order.slice(scored.length);
+      order=scored.sort(function(a,b){return b[0]-a[0];}).map(function(x){return x[1];}).concat(rest);
+      if(Math.abs(bestV)>WIN/2)break;
+    }
+    return best;
+  }
+  return {topology:topology,initial:initial,key:key,moves:moves,apply:apply,legal:legal,status:status,analyse:analyse,search:search};
+})();
+</script>
+
+<script>
+(function(){
+"use strict";
+var src=document.getElementById("engine-src").textContent;
+var E=new Function(src+"\nreturn Engine;")();
+var worker=null,reqId=0,pending={};
+try{
+  var tail="\nself.onmessage=function(e){var d=e.data;var t=Engine.topology(d.variant);var m=Engine.search(t,d.state,d.level,new Set(d.seen));self.postMessage({id:d.id,move:m});};";
+  worker=new Worker(URL.createObjectURL(new Blob([src+tail],{type:"text/javascript"})));
+  worker.onmessage=function(e){var cb=pending[e.data.id];delete pending[e.data.id];if(cb)cb(e.data.move);};
+  worker.onerror=function(){worker=null;};
+}catch(err){worker=null;}
+function think(state,level,cb){
+  var seenArr=Array.from(seen);
+  if(worker){var id=++reqId;pending[id]=cb;worker.postMessage({id:id,variant:cfg.variant,state:state,level:level,seen:seenArr});}
+  else setTimeout(function(){cb(E.search(topo,state,level,new Set(seenArr)));},30);
+}
+
+var NS="http://www.w3.org/2000/svg";
+var $=function(id){return document.getElementById(id);};
+var cfg={variant:"bagh",mode:"ai",human:"G",level:"medium"};
+try{var saved=JSON.parse(localStorage.getItem("tg-cfg")||"null");if(saved)Object.assign(cfg,saved);}catch(e){}
+var topo,S,seen,history,log,sel=null,over=null,thinking=false,hint=null,token=0,lastMove=null;
+var showDanger=true,soundOn=true;
+var pieces={},pieceAt=[],pid=0;
+var svg=$("board"),gHl,gPieces,gTop,gHits;
+
+function P(i){var p=topo.points[i];return {x:p.x*topo.S,y:p.y*topo.S};}
+function el(tag,attrs,parent){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+
+function buildBoard(){
+  svg.innerHTML="";
+  var xs=topo.points.map(function(p){return p.x*topo.S;}),ys=topo.points.map(function(p){return p.y*topo.S;});
+  var minX=Math.min.apply(null,xs),maxX=Math.max.apply(null,xs),minY=Math.min.apply(null,ys),maxY=Math.max.apply(null,ys);
+  var pad=topo.pieceR+34;
+  var vx=minX-pad,vy=minY-pad,vw=maxX-minX+pad*2,vh=maxY-minY+pad*2;
+  svg.setAttribute("viewBox",vx+" "+vy+" "+vw+" "+vh);
+  el("rect",{x:vx+6,y:vy+6,width:vw-12,height:vh-12,rx:26,style:"fill:var(--slab)"},svg);
+  el("rect",{x:vx+6,y:vy+6,width:vw-12,height:vh-12,rx:26,filter:"url(#grain)",opacity:".22"},svg);
+  el("rect",{x:vx+14,y:vy+14,width:vw-28,height:vh-28,rx:20,fill:"none",style:"stroke:var(--slab-2)","stroke-width":3},svg);
+  var gl=el("g",{fill:"none","stroke-linecap":"round","stroke-linejoin":"round"},svg);
+  topo.lines.forEach(function(L){
+    var pts=L.map(function(i){var p=P(i);return p.x+","+p.y;}).join(" ");
+    el("polyline",{points:pts,style:"stroke:var(--groove-hi)","stroke-width":7,transform:"translate(0 2.2)"},gl);
+    el("polyline",{points:pts,style:"stroke:var(--groove)","stroke-width":4.6},gl);
+  });
+  var gn=el("g",{},svg);
+  topo.points.forEach(function(_,i){var p=P(i);el("circle",{cx:p.x,cy:p.y+1.5,r:10,style:"fill:var(--groove-hi)"},gn);el("circle",{cx:p.x,cy:p.y,r:9,style:"fill:var(--node)"},gn);});
+  gHl=el("g",{},svg);gPieces=el("g",{},svg);gTop=el("g",{"pointer-events":"none"},svg);gHits=el("g",{},svg);
+  topo.points.forEach(function(pt,i){
+    var p=P(i);
+    var h=el("circle",{cx:p.x,cy:p.y,r:topo.pieceR+6,class:"hit",tabindex:"0",role:"button","aria-label":"Point "+pt.name,"data-i":i},gHits);
+    h.addEventListener("click",function(){onPoint(i);});
+    h.addEventListener("keydown",function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();onPoint(i);}});
+  });
+}
+function makePiece(kind,pos,anim){
+  var id=++pid,p=P(pos),r=topo.pieceR;
+  var g=el("g",{class:"piece "+kind+(anim?" drop":"")},gPieces);
+  g.style.transform="translate("+p.x+"px,"+p.y+"px)";
+  var inner=el("g",{class:"inner"},g);
+  el("use",{href:"#sym-"+kind,x:-r,y:-r,width:r*2,height:r*2},inner);
+  pieces[id]={id:id,kind:kind,pos:pos,el:g};pieceAt[pos]=id;return id;
+}
+function rebuildPieces(){
+  gPieces.innerHTML="";pieces={};pieceAt=[];
+  S.board.forEach(function(v,i){if(v===1)makePiece("tiger",i);else if(v===2)makePiece("goat",i);});
+}
+function movePiece(from,to){
+  var id=pieceAt[from];if(!id)return;var pc=pieces[id];pieceAt[from]=undefined;pieceAt[to]=id;pc.pos=to;
+  var p=P(to);gPieces.appendChild(pc.el);pc.el.style.transform="translate("+p.x+"px,"+p.y+"px)";
+}
+function killPiece(at){
+  var id=pieceAt[at];if(!id)return;var pc=pieces[id];pieceAt[at]=undefined;delete pieces[id];
+  setTimeout(function(){pc.el.classList.add("dying");},200);
+  setTimeout(function(){pc.el.remove();},800);
+}
+
+/* sound */
+var ac=null;
+function audio(){if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(ac&&ac.state==="suspended")ac.resume();return ac;}
+function tone(f,dur,type,vol,f2,delay){
+  if(!soundOn)return;var a=audio();if(!a)return;var t0=a.currentTime+(delay||0);
+  var o=a.createOscillator(),g=a.createGain();o.type=type||"sine";o.frequency.setValueAtTime(f,t0);
+  if(f2)o.frequency.exponentialRampToValueAtTime(f2,t0+dur);
+  g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(vol||.2,t0+.01);g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g);g.connect(a.destination);o.start(t0);o.stop(t0+dur+.02);
+}
+var sfx={
+  place:function(){tone(740,.07,"triangle",.18);tone(360,.09,"sine",.12,null,.01);},
+  goat:function(){tone(520,.09,"triangle",.14,440);},
+  tiger:function(){tone(170,.14,"sine",.2,120);},
+  capture:function(){tone(220,.35,"sawtooth",.13,60);tone(90,.3,"sine",.25,50,.05);},
+  win:function(){[523,659,784,1046].forEach(function(f,i){tone(f,.35,"triangle",.14,null,i*.12);});},
+  lose:function(){[392,330,262].forEach(function(f,i){tone(f,.4,"sine",.14,null,i*.16);});}
+};
+
+/* game flow */
+function saveCfg(){try{localStorage.setItem("tg-cfg",JSON.stringify(cfg));}catch(e){}}
+function newGame(){
+  token++;thinking=false;
+  topo=E.topology(cfg.variant);S=E.initial(topo);seen=new Set();history=[];log=[];sel=null;over=null;hint=null;lastMove=null;
+  $("overlay").hidden=true;
+  buildBoard();rebuildPieces();syncControls();render();maybeAI();
+}
+function notation(m,side){
+  var n=function(i){return topo.points[i].name;};
+  if(m.t==="p")return {txt:n(m.to),cap:false};
+  if(m.t==="m")return {txt:n(m.from)+"–"+n(m.to),cap:false};
+  return {txt:n(m.from)+"×"+n(m.over)+"→"+n(m.to),cap:true};
+}
+function play(m,byAI){
+  history.push({S:S,seen:new Set(seen),log:log.length,lastMove:lastMove});
+  var side=S.turn;
+  if(m.t==="p"){makePiece("goat",m.to,true);sfx.place();}
+  else if(m.t==="m"){movePiece(m.from,m.to);side==="G"?sfx.goat():sfx.tiger();}
+  else{movePiece(m.from,m.to);killPiece(m.over);sfx.capture();}
+  S=E.apply(S,m);
+  if(S.inHand===0)seen.add(E.key(S));
+  log.push({side:side,n:notation(m)});
+  lastMove=m;sel=null;hint=null;
+  var st=E.status(topo,S,seen);
+  if(st)endGame(st);
+  render(byAI?describe(m,side):null);
+  if(!over)maybeAI();
+}
+function describe(m,side){
+  var n=function(i){return topo.points[i].name;};
+  var who=side==="G"?"Goat":"Tiger";
+  if(m.t==="p")return "Goat placed on <b>"+n(m.to)+"</b>.";
+  if(m.t==="m")return who+" moved <b>"+n(m.from)+" → "+n(m.to)+"</b>.";
+  return "Tiger jumped <b>"+n(m.from)+" → "+n(m.to)+"</b> and ate the goat on "+n(m.over)+".";
+}
+function endGame(st){
+  over=st;
+  var titles={T:"Tigers win",G:"Goats win",D:"Draw"};
+  var reasons={capture:"Five goats eaten. The herd is broken.",trapped:"Every tiger is boxed in. The herd wins by standing together.",stuck:"The goats have no legal move left.",quiet:"80 moves without a capture. Neither side can break through."};
+  setTimeout(function(){
+    $("overTitle").textContent=titles[st.winner];
+    $("overText").textContent=reasons[st.reason];
+    $("overIcon").innerHTML=st.winner==="D"?'<use href="#sym-goat" x="0" y="0" width="100" height="100"/>':'<use href="#sym-'+(st.winner==="T"?"tiger":"goat")+'" x="0" y="0" width="100" height="100"/>';
+    $("overIcon").setAttribute("viewBox","0 0 100 100");
+    $("overlay").hidden=false;
+    if(cfg.mode==="ai"&&st.winner!=="D"){st.winner===cfg.human?sfx.win():sfx.lose();}else sfx.win();
+    $("againBtn").focus({preventScroll:true});
+  },700);
+}
+function isAITurn(){return cfg.mode==="ai"&&S.turn!==cfg.human;}
+function maybeAI(){
+  if(over||!isAITurn())return;
+  thinking=true;render();
+  var my=token,t0=Date.now();
+  think(S,cfg.level,function(m){
+    if(my!==token)return;
+    var wait=Math.max(0,520-(Date.now()-t0));
+    setTimeout(function(){if(my!==token)return;thinking=false;if(m)play(m,true);else render();},wait);
+  });
+}
+function onPoint(i){
+  audio();
+  if(over||thinking||isAITurn())return;
+  var ms=E.legal(topo,S,seen);
+  if(S.turn==="G"&&S.inHand>0){
+    var pm=ms.find(function(m){return m.to===i;});
+    if(pm)play(pm);
+    return;
+  }
+  if(sel!==null){
+    var mv=ms.find(function(m){return m.from===sel&&m.to===i;});
+    if(mv){play(mv);return;}
+  }
+  var mine=S.turn==="G"?2:1;
+  if(S.board[i]===mine&&ms.some(function(m){return m.from===i;})){sel=(sel===i?null:i);}
+  else sel=null;
+  render();
+}
+function undo(){
+  if(!history.length)return;
+  token++;thinking=false;
+  var steps=1;
+  if(cfg.mode==="ai"){
+    // roll back to the most recent position where it is the human's turn
+    var k=history.length-1;
+    while(k>=0&&history[k].S.turn!==cfg.human)k--;
+    if(k<0)return;
+    steps=history.length-k;
+  }
+  var h;for(var s=0;s<steps;s++)h=history.pop();
+  S=h.S;seen=h.seen;log.length=h.log;lastMove=h.lastMove;sel=null;hint=null;over=null;$("overlay").hidden=true;
+  rebuildPieces();render("Move taken back.");
+  maybeAI();
+}
+function doHint(){
+  if(over||thinking||isAITurn())return;
+  var my=token;$("msg").innerHTML="Looking for a good move…";
+  think(S,"medium",function(m){if(my!==token||!m)return;hint=m;sel=m.from!==undefined?m.from:null;render("Suggested move: <b>"+notation(m).txt+"</b>");});
+}
+
+/* render */
+function render(message){
+  var ms=over?[]:E.legal(topo,S,seen);
+  var a=E.analyse(topo,S);
+  // highlights
+  gHl.innerHTML="";gTop.innerHTML="";
+  if(lastMove){
+    var to=P(lastMove.to);
+    if(lastMove.from!==undefined){var fr=P(lastMove.from);
+      el("line",{x1:fr.x,y1:fr.y,x2:to.x,y2:to.y,style:"stroke:var(--gold)","stroke-width":6,"stroke-linecap":"round","stroke-dasharray":"2 12",opacity:".9"},gHl);
+      el("circle",{cx:fr.x,cy:fr.y,r:14,fill:"none",style:"stroke:var(--gold)","stroke-width":3,opacity:".8"},gHl);}
+    el("circle",{cx:to.x,cy:to.y,r:topo.pieceR+7,fill:"none",style:"stroke:var(--gold)","stroke-width":3,opacity:".75"},gHl);
+  }
+  var humanTurn=!over&&!thinking&&!isAITurn();
+  if(showDanger&&!over){
+    Object.keys(a.threat).forEach(function(k){var p=P(+k);el("circle",{cx:p.x,cy:p.y,r:topo.pieceR+5,fill:"none",style:"stroke:var(--accent)","stroke-width":4,class:"pulse"},gTop);});
+  }
+  if(sel!==null&&humanTurn){
+    var sp=P(sel);
+    el("circle",{cx:sp.x,cy:sp.y,r:topo.pieceR+8,fill:"none",style:"stroke:var(--jade)","stroke-width":4,"stroke-dasharray":"10 7",class:"spin"},gTop);
+    ms.filter(function(m){return m.from===sel;}).forEach(function(m){
+      var p=P(m.to);
+      if(m.t==="j"){el("circle",{cx:p.x,cy:p.y,r:18,style:"fill:var(--accent-soft);stroke:var(--accent)","stroke-width":4},gHl);
+        var op=P(m.over);el("circle",{cx:op.x,cy:op.y,r:topo.pieceR+10,fill:"none",style:"stroke:var(--accent)","stroke-width":3,"stroke-dasharray":"4 6"},gTop);}
+      else el("circle",{cx:p.x,cy:p.y,r:13,style:"fill:var(--jade)",class:"pulse"},gHl);
+    });
+  }
+  if(hint&&humanTurn){
+    var hp=P(hint.to);
+    if(hint.from!==undefined){var hf=P(hint.from);el("line",{x1:hf.x,y1:hf.y,x2:hp.x,y2:hp.y,style:"stroke:var(--jade)","stroke-width":5,"stroke-linecap":"round",opacity:".7"},gHl);}
+    el("circle",{cx:hp.x,cy:hp.y,r:topo.pieceR,style:"fill:var(--jade-soft);stroke:var(--jade)","stroke-width":4,class:"pulse"},gHl);
+  }
+  // hit affordances
+  var placing=S.turn==="G"&&S.inHand>0;
+  Array.prototype.forEach.call(gHits.children,function(h){
+    var i=+h.getAttribute("data-i"),can=false;
+    if(humanTurn){
+      if(placing)can=S.board[i]===0;
+      else if(sel!==null&&ms.some(function(m){return m.from===sel&&m.to===i;}))can=true;
+      else can=ms.some(function(m){return m.from===i;});
+    }
+    h.classList.toggle("can",can);
+  });
+  // status chip
+  var side=S.turn==="G"?"goat":"tiger";
+  var who;
+  if(over){who=over.winner==="D"?"Game drawn":(over.winner==="T"?"Tigers":"Goats")+" win";side=over.winner==="T"?"tiger":"goat";}
+  else if(cfg.mode==="ai")who=isAITurn()?"Computer · "+(S.turn==="G"?"Goats":"Tigers"):"You · "+(S.turn==="G"?"Goats":"Tigers");
+  else who=(S.turn==="G"?"Goats":"Tigers")+" to move";
+  $("turnChip").innerHTML='<svg viewBox="0 0 100 100"><use href="#sym-'+side+'" width="100" height="100"/></svg>'+who;
+  $("boardWrap").classList.toggle("thinking",thinking);
+  var msg=message;
+  if(!msg){
+    if(over)msg="Game over. Click Play again or change the board.";
+    else if(thinking)msg="The computer is thinking…";
+    else if(S.turn==="G"&&S.inHand>0)msg="Place a goat on any empty point. <b>"+S.inHand+"</b> left to place.";
+    else if(S.turn==="G")msg=sel!==null?"Choose where this goat goes.":"All goats are down. Pick a goat to move.";
+    else msg=sel!==null?"Choose a destination. A red ring means a capture.":(a.threatCount?"Pick a tiger. <b>"+a.threatCount+"</b> goat"+(a.threatCount>1?"s are":" is")+" open to a jump.":"Pick a tiger to move.");
+  }
+  $("msg").innerHTML=msg;
+  // numbers
+  $("capNum").innerHTML=S.captured+"<small>/ "+topo.target+"</small>";
+  $("capNum").classList.toggle("danger",S.captured>=topo.target-1);
+  var t="";for(var c=0;c<topo.target;c++)t+='<i class="'+(c<S.captured?"on":"")+'"></i>';$("tally").innerHTML=t;
+  $("handNum").textContent=S.inHand;
+  var hd="";for(var g=0;g<topo.goats;g++)hd+='<svg viewBox="0 0 100 100" class="'+(g<S.inHand?"":"gone")+'"><use href="#sym-goat" width="100" height="100"/></svg>';$("herd").innerHTML=hd;
+  $("mobNum").textContent=a.mob;$("trapNum").textContent=a.trapped+" / "+topo.tigers;$("riskNum").textContent=a.threatCount;
+  // log
+  var lg="";
+  for(var r=0;r<log.length;r+=2){
+    var e1=log[r],e2=log[r+1];
+    lg+='<li class="n">'+(r/2+1)+'.</li><li class="'+(e1.n.cap?"x":"")+'">'+e1.n.txt+'</li><li class="'+(e2&&e2.n.cap?"x":"")+'">'+(e2?e2.n.txt:"")+'</li>';
+  }
+  var L=$("log");L.innerHTML=lg;L.scrollTop=L.scrollHeight;
+  $("undoBtn").disabled=!history.length;
+  $("hintBtn").disabled=!!over||thinking||isAITurn();
+}
+function syncControls(){
+  document.querySelectorAll(".seg").forEach(function(s){
+    var k=s.getAttribute("data-key");
+    s.querySelectorAll("button").forEach(function(b){b.setAttribute("aria-pressed",String(b.getAttribute("data-val")===cfg[k]));});
+  });
+  $("aiOpts").hidden=cfg.mode!=="ai";
+}
+document.querySelectorAll(".seg").forEach(function(s){
+  var k=s.getAttribute("data-key");
+  s.addEventListener("click",function(ev){
+    var b=ev.target.closest("button");if(!b)return;var v=b.getAttribute("data-val");
+    if(cfg[k]===v)return;cfg[k]=v;saveCfg();
+    if(k==="level"){syncControls();return;}
+    newGame();
+  });
+});
+$("newBtn").addEventListener("click",function(){audio();newGame();});
+$("againBtn").addEventListener("click",function(){audio();newGame();});
+$("undoBtn").addEventListener("click",undo);
+$("hintBtn").addEventListener("click",doHint);
+$("dangerTog").addEventListener("click",function(){showDanger=!showDanger;this.setAttribute("aria-pressed",String(showDanger));render();});
+$("soundTog").addEventListener("click",function(){soundOn=!soundOn;this.setAttribute("aria-pressed",String(soundOn));});
+newGame();
+})();
+</script>
+</body>
+</html>
