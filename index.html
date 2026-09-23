@@ -25,20 +25,6 @@
   --body:"Mukta","Segoe UI",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    color-scheme:dark;
-    --ground:#16140F; --panel:#211E18; --panel-2:#2A261F; --rule:#3A342B;
-    --ink:#EFE7D8; --muted:#AC9E88; --faint:#7F735F;
-    --slab:#2F2A22; --slab-2:#26221C; --groove:#0E0C09; --groove-hi:#4A4135; --node:#0B0907;
-    --tiger:#E6983A; --tiger-deep:#B5621A; --stripe:#1D1208; --muzzle:#F2E7D2;
-    --goat:#EFE8D8; --goat-shade:#CFC3AB; --goat-rim:#7C6C55;
-    --accent:#E0625A; --accent-soft:rgba(224,98,90,.18);
-    --jade:#5CB68F; --jade-soft:rgba(92,182,143,.2);
-    --gold:#E0B24A;
-    --shadow:rgba(0,0,0,.6);
-  }
-}
 :root[data-theme="dark"]{
   color-scheme:dark;
   --ground:#16140F; --panel:#211E18; --panel-2:#2A261F; --rule:#3A342B;
@@ -68,19 +54,20 @@ h1 .amp{color:var(--tiger-deep)}
 
 /* board */
 .board-wrap{position:relative;background:var(--panel);border-radius:18px;padding:12px;box-shadow:inset 0 0 0 1px var(--rule)}
-.status-strip{display:flex;align-items:center;gap:10px;padding:4px 6px 12px;min-height:44px;flex-wrap:wrap}
-.turn-chip{display:inline-flex;align-items:center;gap:8px;padding:4px 12px 4px 6px;border-radius:999px;background:var(--panel-2);font-weight:600;font-size:15px}
+.status-strip{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;padding:4px 6px 12px}
+.turn-chip{white-space:nowrap;min-height:36px;display:inline-flex;align-items:center;gap:8px;padding:4px 12px 4px 6px;border-radius:999px;background:var(--panel-2);font-weight:600;font-size:15px}
 .turn-chip svg{width:28px;height:28px}
-.msg{color:var(--muted);font-size:15px;flex:1;min-width:180px}
+.msg{color:var(--muted);font-size:15px;line-height:1.35;height:2.7em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;align-self:center}
+@media (max-width:600px){.status-strip{grid-template-columns:minmax(0,1fr);gap:6px}.turn-chip{justify-self:start}.board-wrap{padding:10px}}
 .msg b{color:var(--ink);font-weight:600}
-svg#board{display:block;width:100%;height:auto;max-height:76vh;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+svg#board{display:block;width:100%;height:auto;max-height:76vh;max-height:76svh;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .piece{transition:transform .42s cubic-bezier(.3,.7,.25,1)}
 .piece .inner{transform-box:fill-box;transform-origin:center;filter:drop-shadow(0 4px 3px var(--shadow))}
 .piece.drop .inner{animation:drop .38s cubic-bezier(.2,.8,.3,1.2)}
 .piece.dying .inner{animation:die .55s ease-in forwards}
 @keyframes drop{from{transform:scale(1.5);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes die{0%{transform:scale(1);opacity:1}35%{transform:scale(1.15) rotate(-8deg);opacity:1}100%{transform:scale(.2) rotate(25deg);opacity:0}}
-.hit{fill:var(--jade);fill-opacity:0;outline:none}
+.hit{fill:var(--jade);fill-opacity:0;outline:none;-webkit-tap-highlight-color:transparent}
 .hit.can{cursor:pointer}
 .hit.can:hover,.hit.can:focus-visible{fill-opacity:.22}
 .hit:focus-visible{stroke:var(--jade);stroke-width:3}
@@ -131,7 +118,7 @@ aside{display:flex;flex-direction:column;gap:14px}
 .tog[aria-pressed="true"] .sw::after{transform:translateX(14px)}
 .hidden-ai[hidden]{display:none!important}
 
-.log{font-family:var(--mono);font-size:13px;max-height:190px;overflow-y:auto;margin:0;padding:0;list-style:none;display:grid;grid-template-columns:auto 1fr 1fr;gap:2px 10px;font-variant-numeric:tabular-nums}
+.log{font-family:var(--mono);font-size:13px;height:190px;overflow-y:auto;margin:0;padding:0;list-style:none;display:grid;grid-template-columns:auto 1fr 1fr;gap:2px 10px;font-variant-numeric:tabular-nums}
 .log .n{color:var(--faint)}
 .log .x{color:var(--accent);font-weight:500}
 .log:empty::before{content:"No moves yet — goats place first.";grid-column:1/-1;color:var(--faint);font-family:var(--body)}
@@ -551,6 +538,7 @@ function buildBoard(){
   topo.points.forEach(function(pt,i){
     var p=P(i);
     var h=el("circle",{cx:p.x,cy:p.y,r:topo.pieceR+6,class:"hit",tabindex:"0",role:"button","aria-label":"Point "+pt.name,"data-i":i},gHits);
+    h.addEventListener("pointerdown",function(ev){if(ev.pointerType!=="mouse")ev.preventDefault();});
     h.addEventListener("click",function(){onPoint(i);});
     h.addEventListener("keydown",function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();onPoint(i);}});
   });
@@ -750,11 +738,11 @@ function render(message){
   $("boardWrap").classList.toggle("thinking",thinking);
   var msg=message;
   if(!msg){
-    if(over)msg="Game over. Click Play again or change the board.";
+    if(over)msg="Game over. Tap Play again to start a new game.";
     else if(thinking)msg="The computer is thinking…";
     else if(S.turn==="G"&&S.inHand>0)msg="Place a goat on any empty point. <b>"+S.inHand+"</b> left to place.";
     else if(S.turn==="G")msg=sel!==null?"Choose where this goat goes.":"All goats are down. Pick a goat to move.";
-    else msg=sel!==null?"Choose a destination. A red ring means a capture.":(a.threatCount?"Pick a tiger. <b>"+a.threatCount+"</b> goat"+(a.threatCount>1?"s are":" is")+" open to a jump.":"Pick a tiger to move.");
+    else msg=sel!==null?"Pick a destination. Red ring = capture.":(a.threatCount?"Pick a tiger. <b>"+a.threatCount+"</b> goat"+(a.threatCount>1?"s are":" is")+" open to a jump.":"Pick a tiger to move.");
   }
   $("msg").innerHTML=msg;
   // numbers
